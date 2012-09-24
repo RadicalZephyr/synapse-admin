@@ -36,20 +36,15 @@
               :columns 2
               :vgap    10
               :items ["Email:" (text :id :username
-                                       :columns 15)
+                                     :columns 15)
                       "Password:" (password :id :password
-                                           :columns 15)
+                                            :columns 15)
                       " " (button :text "Login"
                                   :mnemonic \n
                                   :listen [:action login])]))
-
-(defn fill-frame
-  ""
-  [frame]
-  (config! frame :content (login-widget)))
 
 (defn -main
   "Hello world, seesaw style!"
   [& args]
   (native!)
-  (-> (frame :title "Synapse Administration") fill-frame pack! show!))
+  (-> (frame :title "Synapse Administration") (config! :content (login-widget)) pack! show!))
