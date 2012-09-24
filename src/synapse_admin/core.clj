@@ -2,7 +2,13 @@
   (:use seesaw.core)
   (:import org.sagebionetworks.client.Synapse))
 
+(defn fill-frame
+  ""
+  [frame]
+  frame)
+
 (defn -main
-  "I don't do a whole lot."
+  "Hello world, seesaw style!"
   [& args]
-  (println "Hello, World!"))
+  (native!)
+  (-> (frame :title "Hello" :content "Hey world!") fill-frame pack! show!))
