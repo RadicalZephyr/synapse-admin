@@ -2,6 +2,12 @@
   (:use seesaw.core)
   (:import org.sagebionetworks.client.Synapse))
 
+(def ^:dynamic *synapse-client*
+  "The ref to the synapse client used by the application")
+
+(def ^:dynamic *synapse-credentials*
+  "The credentials of the currently logged in user")
+
 (defn display-main-page
   "Display the main admin page"
   [root]
@@ -10,7 +16,15 @@
 (defn validate-email [email]
   (re-matches #"(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$" email))
 
-(defn login [event]
+(defn login [synapse username password]
+  (def *synapse-client* synapse)
+  (def *synapse-credentials* {:username username :password password}))
+
+(defn logout []
+  (def *synapse-client* nil)
+  (def *synapse-credentials* nil))
+
+(defn attempt-login [event]
   "Fire a login event"
   (let [{:keys [username password]} (group-by-id (to-root event))
         username (value username)
@@ -22,10 +36,11 @@
             (.login synapse
                     username
                     password)
-                    (alert "You've successfully logged in to Synapse!")
-                    (catch
-                        org.sagebionetworks.client.exceptions.SynapseBadRequestException ex
-                      (alert "Unable to login, make sure your username/password are correct.")))
+            (alert "You've successfully logged in to Synapse!")
+            (login synapse username password)
+            (catch
+                org.sagebionetworks.client.exceptions.SynapseBadRequestException ex
+              (alert "Unable to login, make sure your username/password are correct.")))
           (= "" password) (alert "Your password cannot be blank.")
           :else (alert "Please enter a valid email address"))))
 
@@ -41,7 +56,7 @@
                                             :columns 15)
                       " " (button :text "Login"
                                   :mnemonic \n
-                                  :listen [:action login])]))
+                                  :listen [:action attempt-login])]))
 
 (defn -main
   "Hello world, seesaw style!"
