@@ -26,7 +26,8 @@
 
 (defn attempt-login [event]
   "Fire a login event"
-  (let [{:keys [username password]} (group-by-id (to-root event))
+  (let [root (to-root event)
+        {:keys [username password]} (group-by-id root)
         username (value username)
         password (value password)
         synapse (Synapse.)]
@@ -36,13 +37,14 @@
             (.login synapse
                     username
                     password)
-            (alert "You've successfully logged in to Synapse!")
             (login synapse username password)
+            (alert root "You've successfully logged in to Synapse!")
+            (display-main-page root)
             (catch
                 org.sagebionetworks.client.exceptions.SynapseBadRequestException ex
-              (alert "Unable to login, make sure your username/password are correct.")))
-          (= "" password) (alert "Your password cannot be blank.")
-          :else (alert "Please enter a valid email address"))))
+              (alert root "Unable to login, make sure your username/password are correct.")))
+          (= "" password) (alert root "Your password cannot be blank.")
+          :else (alert root "Please enter a valid email address"))))
 
 (defn login-widget
   "Create the login widget"
