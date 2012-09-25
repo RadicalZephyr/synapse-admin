@@ -3,7 +3,7 @@
   (:import org.sagebionetworks.client.Synapse))
 
 (def ^:dynamic *synapse-client*
-  "The ref to the synapse client used by the application")
+  "The main synapse client used by the application")
 
 (def ^:dynamic *synapse-credentials*
   "The credentials of the currently logged in user")
@@ -62,4 +62,7 @@
   "Hello world, seesaw style!"
   [& args]
   (native!)
-  (-> (frame :title "Synapse Administration") (config! :content (login-widget)) pack! show!))
+  (-> (frame :title "Synapse Administration")
+      (config! :content (login-widget))
+      pack!
+      show!))
