@@ -11,7 +11,8 @@
 (defn display-main-page
   "Display the main admin page"
   [root]
-  )
+  (invoke-later
+   ))
 
 (defn validate-email [email]
   (re-matches #"(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$" email))
@@ -64,7 +65,8 @@
   "Hello world, seesaw style!"
   [& args]
   (native!)
-  (-> (frame :title "Synapse Administration")
-      (config! :content (login-widget))
-      pack!
-      show!))
+  (invoke-later
+   (-> (frame :title "Synapse Administration")
+       (config! :content (login-widget))
+       pack!
+       show!)))
