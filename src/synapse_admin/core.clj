@@ -18,12 +18,12 @@
   (re-matches #"(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$" email))
 
 (defn login [synapse username password]
-  (set! *synapse-client* synapse)
-  (set! *synapse-credentials* {:username username :password password}))
+  (def ^:dynamic *synapse-client* synapse)
+  (def ^:dynamic *synapse-credentials* {:username username :password password}))
 
 (defn logout []
-  (set! *synapse-client* nil)
-  (set! *synapse-credentials* nil))
+  (def ^:dynamic *synapse-client* nil)
+  (def ^:dynamic *synapse-credentials* nil))
 
 (defn attempt-login [event]
   "Fire a login event"
