@@ -36,7 +36,12 @@
          (filter #(not (re-find #"(?i)@jayhodgson\.com" %)))
          (filter #(not (contains? special-filter (lower-case (first (clojure.string/split % #"@")))))))))
 
-(defn project-stats [all-profiles all-projects]
+(defn is-open-project [acl]
+  (some #(contains? (set (:accessType %)) "READ")
+        (filter #(= (:principalId %) 273948) acl)))
+
+
+(defn project-stats [all-profiles all-projects all-project-acls]
   (let [all-emails (map :email all-profiles)
         non-sage-emails (set (filter-sage-employees all-emails))
         sage-profiles (filter #(not
@@ -67,22 +72,26 @@
                                          (contains? sage-id->email
                                                     (str (:project.createdByPrincipalId %)))))
                                all-projects)
-        open-projects ()
-        closed-projects ()]
+        open-projects (filter is-open-project (map :resourceAccess all-project-acls))
+        closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))
+        unknown-access-projects (filter #(not (or (not (is-open-project %))
+                                                  (is-open-project %)))
+                                        (map :resourceAccess all-project-acls))]
     {:sage (count sage-projects)
      :non-sage (count non-sage-projects)
      :other (count other-projects)
      :open (count open-projects)
      :closed (count closed-projects)
+     :unknown-access (count unknown-access-projects)
      :total (count all-projects)}))
 
 (defn get-all-projects [syn]
   (:results
    (read-json
-   (->
-    syn
-    (.query "select * from project")
-    .toString))))
+    (->
+     syn
+     (.query "select * from project")
+     .toString))))
 
 (defn get-all-project-acls [syn all-projects]
   (map #(object->json (.getACL syn (:project.id %))) all-projects))
