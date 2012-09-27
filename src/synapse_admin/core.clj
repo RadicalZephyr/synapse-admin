@@ -1,18 +1,77 @@
 (ns synapse-admin.core
   (:use seesaw.core)
+  (:use [clojure.string :only (split lower-case)])
+  (:use [clojure.data.json :only (read-json json-str)])
   (:import org.sagebionetworks.client.Synapse)
   (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl))
 
+(defn list-methods [obj]
+  (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
+    (map #(.getName %) objMethods)))
+
 (defn has-method [obj method-name]
   (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
-    (contains? (set (map #(.getName %) objMethods)) method-name)))
+    (contains? (set (list-methods obj)) method-name)))
 
 (defn object->json [obj]
-  (when (has-method obj "writeToJSONObject")
+  (if (has-method obj "writeToJSONObject")
     (let [joa (JSONObjectAdapterImpl.)]
-      (.. obj
-          (writeToJSONObject joa)
-          (toJSONString)))))
+      (read-json (.. obj
+                     (writeToJSONObject joa)
+                     (toJSONString))))
+  obj))
+
+(defn filter-sage-employees [email-list]
+  (let [sage-names (set (map #(lower-case
+                               (first (split % #"@")))
+                             (filter #(re-find #"(?i)@sagebase\.org" %)
+                                     email-list)))
+        special-filter #{"earthlingzephyr" "isjang" "xschildwachter"
+                         "bennett.k.ng" "bruce_hoff" "mikerkellen"
+                         "cbare" "metteptrs" "matthew.furia" "laramangravite"
+                         "nicole.deflaux.guest" "wangz"}]
+    (->> email-list
+         (filter #(not (re-find #"(?i)@sagebase\.org" %)))
+         (filter #(not (contains? sage-names (lower-case (first (clojure.string/split % #"@"))))))
+         (filter #(not (re-find #"(?i)@jayhodgson\.com" %)))
+         (filter #(not (contains? special-filter (lower-case (first (clojure.string/split % #"@")))))))))
+
+(defn project-stats [all-profiles all-projects]
+  (let [all-emails (map :email all-profiles)
+        non-sage-emails (set (filter-sage-employees all-emails))
+        sage-profiles (filter #(not
+                                (contains?
+                                 non-sage-emails
+                                 (:email %)))
+                              all-profiles)
+        sage-id->email (apply merge
+                              (map #(array-map (:ownerId %)
+                                               (:email %))
+                                   sage-profiles))
+        sage-projects (filter #(contains? sage-id->email
+                                          (str (:project.createdByPrincipalId %)))
+                              all-projects)
+        non-sage-profiles (filter #(contains?
+                                    non-sage-emails
+                                    (:email %))
+                                  all-profiles)
+        non-sage-id->email (apply merge
+                                  (map #(array-map (:ownerId %)
+                                                   (:email %))
+                                       non-sage-profiles))
+        non-sage-projects (filter #(contains? non-sage-id->email
+                                          (str (:project.createdByPrincipalId %)))
+                                  all-projects)
+        other-projects (filter #(not (or (contains? non-sage-id->email
+                                                    (str (:project.createdByPrincipalId %)))
+                                         (contains? sage-id->email
+                                                    (str (:project.createdByPrincipalId %)))))
+                               all-projects)]
+    {:sage (count sage-projects)
+     :non-sage (count non-sage-projects)
+     :other {:count (count other-projects) :projects other-projects}
+     :total (count all-projects)}))
+
 
 (def ^:dynamic *synapse-client*
   "The main synapse client used by the application")
