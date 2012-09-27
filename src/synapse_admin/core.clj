@@ -72,6 +72,17 @@
      :other {:count (count other-projects) :projects other-projects}
      :total (count all-projects)}))
 
+(defn get-all-projects [syn]
+  (->
+   syn
+   (.query "select * from project")
+   .toString
+   read-json))
+
+(defn get-all-profiles [syn]
+  (let [all-users (object->json (.getUsers syn 0 10000))
+        all-ids (map #(:ownerId %) (:results all-users))]
+    (map #(object->json (.getUserProfile syn (str %))) all-ids)))
 
 (def ^:dynamic *synapse-client*
   "The main synapse client used by the application")
