@@ -66,18 +66,26 @@
                                                     (str (:project.createdByPrincipalId %)))
                                          (contains? sage-id->email
                                                     (str (:project.createdByPrincipalId %)))))
-                               all-projects)]
+                               all-projects)
+        open-projects ()
+        closed-projects ()]
     {:sage (count sage-projects)
      :non-sage (count non-sage-projects)
-     :other {:count (count other-projects) :projects other-projects}
+     :other (count other-projects)
+     :open (count open-projects)
+     :closed (count closed-projects)
      :total (count all-projects)}))
 
 (defn get-all-projects [syn]
-  (->
-   syn
-   (.query "select * from project")
-   .toString
-   read-json))
+  (:results
+   (read-json
+   (->
+    syn
+    (.query "select * from project")
+    .toString))))
+
+(defn get-all-project-acls [syn all-projects]
+  (map #(object->json (.getACL syn (:project.id %))) all-projects))
 
 (defn get-all-profiles [syn]
   (let [all-users (object->json (.getUsers syn 0 10000))
