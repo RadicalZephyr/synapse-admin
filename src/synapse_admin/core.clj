@@ -1,6 +1,18 @@
 (ns synapse-admin.core
   (:use seesaw.core)
-  (:import org.sagebionetworks.client.Synapse))
+  (:import org.sagebionetworks.client.Synapse)
+  (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl))
+
+(defn has-method [obj method-name]
+  (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
+    (contains? (set (map #(.getName %) objMethods)) method-name)))
+
+(defn object->json [obj]
+  (when (has-method obj "writeToJSONObject")
+    (let [joa (JSONObjectAdapterImpl.)]
+      (.. obj
+          (writeToJSONObject joa)
+          (toJSONString)))))
 
 (def ^:dynamic *synapse-client*
   "The main synapse client used by the application")
