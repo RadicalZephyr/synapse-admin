@@ -3,15 +3,18 @@
   (:use [clojure.string :only (split lower-case)])
   (:use [clojure.data.json :only (read-json json-str)])
   (:import org.sagebionetworks.client.Synapse)
-  (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl))
+  (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl)
+  (:import org.sagebionetworks.client.exceptions.SynapseNotFoundException))
 
 (defn list-methods [obj]
-  (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
-    (map #(.getName %) objMethods)))
+  (when obj
+    (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
+      (map #(.getName %) objMethods))))
 
 (defn has-method [obj method-name]
-  (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
-    (contains? (set (list-methods obj)) method-name)))
+  (when obj
+    (let [objMethods (.. obj (getClass) (getDeclaredMethods))]
+      (contains? (set (list-methods obj)) method-name))))
 
 (defn object->json [obj]
   (if (has-method obj "writeToJSONObject")
@@ -67,22 +70,12 @@
         non-sage-projects (filter #(contains? non-sage-id->email
                                           (str (:project.createdByPrincipalId %)))
                                   all-projects)
-        other-projects (filter #(not (or (contains? non-sage-id->email
-                                                    (str (:project.createdByPrincipalId %)))
-                                         (contains? sage-id->email
-                                                    (str (:project.createdByPrincipalId %)))))
-                               all-projects)
         open-projects (filter is-open-project (map :resourceAccess all-project-acls))
-        closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))
-        unknown-access-projects (filter #(not (or (not (is-open-project %))
-                                                  (is-open-project %)))
-                                        (map :resourceAccess all-project-acls))]
+        closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))]
     {:sage (count sage-projects)
      :non-sage (count non-sage-projects)
-     :other (count other-projects)
      :open (count open-projects)
      :closed (count closed-projects)
-     :unknown-access (count unknown-access-projects)
      :total (count all-projects)}))
 
 (defn get-all-projects [syn]
@@ -94,7 +87,11 @@
      .toString))))
 
 (defn get-all-project-acls [syn all-projects]
-  (map #(object->json (.getACL syn (:project.id %))) all-projects))
+  (map #(object->json (try
+                        (.getACL syn (:project.id %))
+                        (catch SynapseNotFoundException e
+                          nil)))
+       all-projects))
 
 (defn get-all-profiles [syn]
   (let [all-users (object->json (.getUsers syn 0 10000))
