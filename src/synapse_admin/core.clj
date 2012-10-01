@@ -32,7 +32,7 @@
         special-filter #{"earthlingzephyr" "isjang" "xschildwachter"
                          "bennett.k.ng" "bruce_hoff" "mikerkellen"
                          "cbare" "metteptrs" "matthew.furia" "laramangravite"
-                         "nicole.deflaux.guest" "wangz"}]
+                         "nicole.deflaux.guest"}]
     (->> email-list
          (filter #(not (re-find #"(?i)@sagebase\.org" %)))
          (filter #(not (contains? sage-names (lower-case (first (clojure.string/split % #"@"))))))
