@@ -22,7 +22,7 @@
       (read-json (.. obj
                      (writeToJSONObject joa)
                      (toJSONString))))
-  obj))
+    obj))
 
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
@@ -43,8 +43,7 @@
   (some #(contains? (set (:accessType %)) "READ")
         (filter #(= (:principalId %) 273948) acl)))
 
-
-(defn synapse-stats [all-profiles all-projects all-project-acls]
+(defn partition-profiles [all-profiles]
   (let [all-emails (map :email all-profiles)
         non-sage-emails (set (filter-sage-employees all-emails))
         sage-profiles (filter #(not
@@ -52,6 +51,14 @@
                                  non-sage-emails
                                  (:email %)))
                               all-profiles)
+        non-sage-profiles (filter #(contains?
+                                    non-sage-emails
+                                    (:email %))
+                                  all-profiles)]
+    [sage-profiles non-sage-profiles]))
+
+(defn synapse-stats [all-profiles all-projects all-project-acls]
+  (let [[sage-profiles non-sage-profiles] (partition-profiles all-profiles)
         sage-id->email (apply merge
                               (map #(array-map (:ownerId %)
                                                (:email %))
@@ -59,16 +66,12 @@
         sage-projects (filter #(contains? sage-id->email
                                           (str (:project.createdByPrincipalId %)))
                               all-projects)
-        non-sage-profiles (filter #(contains?
-                                    non-sage-emails
-                                    (:email %))
-                                  all-profiles)
         non-sage-id->email (apply merge
                                   (map #(array-map (:ownerId %)
                                                    (:email %))
                                        non-sage-profiles))
         non-sage-projects (filter #(contains? non-sage-id->email
-                                          (str (:project.createdByPrincipalId %)))
+                                              (str (:project.createdByPrincipalId %)))
                                   all-projects)
         open-projects (filter is-open-project (map :resourceAccess all-project-acls))
         closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))]
