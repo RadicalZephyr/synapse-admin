@@ -96,7 +96,9 @@
                        :closed (count sage-closed)}
                 :non-sage {:open (count non-sage-open)
                            :closed (count non-sage-closed)}
-                :total (count all-projects)}}))
+                :total {:all (count all-projects)
+                        :open (count open-projects)
+                        :closed (count closed-projects)}}}))
 
 (defn get-all-projects [syn]
   (:results
