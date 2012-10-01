@@ -44,7 +44,7 @@
         (filter #(= (:principalId %) 273948) acl)))
 
 
-(defn project-stats [all-profiles all-projects all-project-acls]
+(defn synapse-stats [all-profiles all-projects all-project-acls]
   (let [all-emails (map :email all-profiles)
         non-sage-emails (set (filter-sage-employees all-emails))
         sage-profiles (filter #(not
@@ -72,11 +72,13 @@
                                   all-projects)
         open-projects (filter is-open-project (map :resourceAccess all-project-acls))
         closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))]
-    {:sage (count sage-projects)
-     :non-sage (count non-sage-projects)
-     :open (count open-projects)
-     :closed (count closed-projects)
-     :total (count all-projects)}))
+    {:users {:sage (count sage-profiles)
+             :non-sage (count non-sage-profiles)}
+     :projects {:sage (count sage-projects)
+                :non-sage (count non-sage-projects)
+                :open (count open-projects)
+                :closed (count closed-projects)
+                :total (count all-projects)}}))
 
 (defn get-all-projects [syn]
   (:results
@@ -90,7 +92,7 @@
   (map #(object->json (try
                         (.getACL syn (:project.id %))
                         (catch SynapseNotFoundException e
-                          nil)))
+                          %)))
        all-projects))
 
 (defn get-all-profiles [syn]
