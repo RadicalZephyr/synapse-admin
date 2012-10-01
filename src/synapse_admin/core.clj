@@ -2,6 +2,7 @@
   (:use seesaw.core)
   (:use [clojure.string :only (split lower-case)])
   (:use [clojure.data.json :only (read-json json-str)])
+  (:use [clojure.set :only (intersection difference)])
   (:import org.sagebionetworks.client.Synapse)
   (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl)
   (:import org.sagebionetworks.client.exceptions.SynapseNotFoundException))
@@ -39,9 +40,18 @@
          (filter #(not (re-find #"(?i)@jayhodgson\.com" %)))
          (filter #(not (contains? special-filter (lower-case (first (clojure.string/split % #"@")))))))))
 
+(defn has-read-access [acl]
+  (contains? (set (:accessType acl)) "READ"))
+
 (defn is-open-project [acl]
-  (some #(contains? (set (:accessType %)) "READ")
-        (filter #(= (:principalId %) 273948) acl)))
+  (some has-read-access
+        (filter #(= (:principalId %) 273948)
+                (:resourceAccess acl))))
+
+(defn acl->id-set [project-acls]
+  (set (map #(or (:id %)
+                 (:project.id %))
+            project-acls)))
 
 (defn partition-profiles [all-profiles]
   (let [all-emails (map :email all-profiles)
@@ -73,14 +83,19 @@
         non-sage-projects (filter #(contains? non-sage-id->email
                                               (str (:project.createdByPrincipalId %)))
                                   all-projects)
-        open-projects (filter is-open-project (map :resourceAccess all-project-acls))
-        closed-projects (filter #(not (is-open-project %)) (map :resourceAccess all-project-acls))]
+        open-projects (acl->id-set (filter is-open-project all-project-acls))
+        sage-open (intersection open-projects (acl->id-set sage-projects))
+        non-sage-open (intersection open-projects (acl->id-set non-sage-projects))
+
+        closed-projects (acl->id-set (filter #(not (is-open-project %)) all-project-acls))
+        sage-closed (intersection (acl->id-set sage-projects) closed-projects)
+        non-sage-closed (intersection (acl->id-set non-sage-projects) closed-projects)]
     {:users {:sage (count sage-profiles)
              :non-sage (count non-sage-profiles)}
-     :projects {:sage (count sage-projects)
-                :non-sage (count non-sage-projects)
-                :open (count open-projects)
-                :closed (count closed-projects)
+     :projects {:sage {:open (count sage-open)
+                       :closed (count sage-closed)}
+                :non-sage {:open (count non-sage-open)
+                           :closed (count non-sage-closed)}
                 :total (count all-projects)}}))
 
 (defn get-all-projects [syn]
