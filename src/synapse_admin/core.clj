@@ -82,7 +82,7 @@
 (defn has-read-access [acl]
   (contains? (set (:accessType acl)) "READ"))
 
-(defn is-open-acl [acl]
+(defn is-open-acl? [acl]
   (some has-read-access
         (filter #(or (= (:principalId %) 273948)
                      (= (:principalId %) 273949))
@@ -123,11 +123,11 @@
         non-sage-projects (filter #(contains? non-sage-id->email
                                               (str (:project.createdByPrincipalId %)))
                                   all-projects)
-        open-projects (acl->id-set (filter is-open-acl all-project-acls))
+        open-projects (acl->id-set (filter is-open-acl? all-project-acls))
         sage-open (intersection open-projects (acl->id-set sage-projects))
         non-sage-open (intersection open-projects (acl->id-set non-sage-projects))
 
-        closed-projects (acl->id-set (filter #(not (is-open-acl %)) all-project-acls))
+        closed-projects (acl->id-set (filter #(not (is-open-acl? %)) all-project-acls))
         sage-closed (intersection (acl->id-set sage-projects) closed-projects)
         non-sage-closed (intersection (acl->id-set non-sage-projects) closed-projects)]
     {:users {:sage (count sage-profiles)
