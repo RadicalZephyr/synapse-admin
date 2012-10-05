@@ -25,6 +25,9 @@
                      (toJSONString))))
     obj))
 
+(defn query [syn query-string]
+  (.query syn query-string))
+
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
                                (first (split % #"@")))
