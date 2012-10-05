@@ -33,7 +33,7 @@
       :results))
 
 (defn get-root-project [entity-path]
-  (let [path (:path ep)]
+  (let [path (:path entity-path)]
     (if (= (:name (first path)) "root")
       (second path)
       (first path))))
@@ -53,16 +53,38 @@
    (.getACL syn)
    object->json))
 
+(declare is-open-acl?)
+
+(defn public-or-auth-acl? [acl]
+  (map #(if (= (:principalId %) 273948)
+          ::Auth_Users ::Public)
+       (filter #(or (= (:principalId %) 273948)
+                    (= (:principalId %) 273949))
+               (:resourceAccess acl))))
+
+(defn classify-acl [acl]
+  (if (is-open-acl? acl)
+    (public-or-auth-acl? acl)
+    ::Closed))
+
 (defn entities->acl-parent [syn entities]
   (map #(let [id (:data.id %)]
-          [(get-effective-acl syn id)
-           (get-entity-parent syn id)])
+          {:id id
+           :access (classify-acl (get-effective-acl syn id))
+           :parent (get-entity-parent syn id)})
        entities))
 
 (defn get-open-data [syn user-id]
   (->>
    (query syn (str "select * from data where createdByPrincipalId == " user-id))
-   (entities->acl-parent syn)))
+   (entities->acl-parent syn)
+   (map #(assoc % :ownerId user-id))
+   (filter #(not (= (:access %) ::Closed)))))
+
+(defn get-users-open-data [syn user-list]
+  (filter seq
+          (map #(get-open-data syn (:ownerId %))
+               user-list)))
 
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
