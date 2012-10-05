@@ -43,8 +43,7 @@
   (let [total (query-size syn query-string)]
     (loop [offset 1
            results []]
-      (if (> total (+ offset
-                      page-size))
+      (if (> total offset)
         (recur (+ offset page-size 1)
                (conj results
                      (query syn (str query-string
