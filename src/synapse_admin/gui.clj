@@ -1,6 +1,6 @@
 (ns synapse-admin.gui
   (:use seesaw.core)
-  (:use [synapse-admin core util])
+  (:use [synapse-admin core client])
   (:import org.sagebionetworks.client.Synapse))
 
 (def ^:dynamic *synapse-client*
