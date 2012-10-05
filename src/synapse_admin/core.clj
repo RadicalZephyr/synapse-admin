@@ -38,6 +38,13 @@
       (second path)
       (first path))))
 
+(defn get-entity-parent [syn entity-id]
+  (->
+   (.getEntityPath syn entity-id)
+   object->json
+   get-root-project
+   (dissoc :type)))
+
 (defn get-effective-acl [syn entity-id]
   (->>
    (.getEntityBenefactor syn entity-id)
@@ -45,6 +52,17 @@
    :id
    (.getACL syn)
    object->json))
+
+(defn entities->acl-parent [syn entities]
+  (map #(let [id (:data.id %)]
+          [(get-effective-acl syn id)
+           (get-entity-parent syn id)])
+       entities))
+
+(defn get-open-data [syn user-id]
+  (->>
+   (query syn (str "select * from data where createdByPrincipalId == " user-id))
+   (entities->acl-parent syn)))
 
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
