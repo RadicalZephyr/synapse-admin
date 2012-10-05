@@ -26,7 +26,25 @@
     obj))
 
 (defn query [syn query-string]
-  (.query syn query-string))
+  (-> syn
+      (.query query-string)
+      .toString
+      read-json
+      :results))
+
+(defn get-root-project [entity-path]
+  (let [path (:path ep)]
+    (if (= (:name (first path)) "root")
+      (second path)
+      (first path))))
+
+(defn get-effective-acl [syn entity-id]
+  (->>
+   (.getEntityBenefactor syn entity-id)
+   object->json
+   :id
+   (.getACL syn)
+   object->json))
 
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
