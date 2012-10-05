@@ -107,6 +107,52 @@
           (map #(get-open-data syn (:ownerId %))
                user-list)))
 
+(defn remove-owner-id [map-seq]
+  (map #(dissoc % :ownerId) map-seq))
+
+(defn extract-owner-id [map-seq]
+  (:ownerId (first map-seq)))
+
+(defn id->display-name [syn id]
+  (try
+    (->
+     (.getUserProfile syn id)
+     object->json
+     :displayName)
+    (catch SynapseNotFoundException e
+      (str id))))
+
+(defn transform-open-data [syn map-seq]
+  (let [id (extract-owner-id map-seq)
+        name (id->display-name syn id)]
+    {:name name
+     :data (remove-owner-id map-seq)}))
+
+(defn data-to-vector [map-seq user]
+  (map #(let [id (:id %)
+              access (:access %)
+              parent-id (:id (:parent %))]
+          [user id parent-id access])
+       map-seq))
+
+(defn data-vectors-to-csv [data-vectors size]
+  (->>
+   (flatten data-vectors)
+   (partition size)
+   (map #(clojure.string/join "," %))
+   (clojure.string/join "\n")))
+
+(defn statistics-of-open-data [open-data]
+  (let [num-users (count open-data)
+        user-counts (map #(let [user (:name %)
+                                data-count (count (:data %))]
+                            {:name user
+                             :data-count data-count})
+                         open-data)]
+    {:number-of-users num-users
+     :counts-by-user user-counts}))
+
+
 (defn filter-sage-employees [email-list]
   (let [sage-names (set (map #(lower-case
                                (first (split % #"@")))
