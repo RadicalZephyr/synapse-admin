@@ -32,6 +32,28 @@
       read-json
       :results))
 
+(defn query-size [syn query-string]
+  (-> syn
+      (.query (str query-string " LIMIT 1"))
+      .toString
+      read-json
+      :totalNumberOfResults))
+
+(defn paginate-query [syn query-string page-size]
+  (let [total (query-size syn query-string)]
+    (loop [offset 1
+           results []]
+      (if (> total (+ offset
+                      page-size))
+        (recur (+ offset page-size 1)
+               (conj results
+                     (query syn (str query-string
+                                     " LIMIT "
+                                     page-size
+                                     " OFFSET "
+                                     offset))))
+        (flatten results)))))
+
 (defn get-root-project [entity-path]
   (let [path (:path entity-path)]
     (if (= (:name (first path)) "root")
@@ -76,7 +98,7 @@
 
 (defn get-open-data [syn user-id]
   (->>
-   (query syn (str "select * from data where createdByPrincipalId == " user-id))
+   (paginate-query syn (str "select id from data where createdByPrincipalId == " user-id) 1000)
    (entities->acl-parent syn)
    (map #(assoc % :ownerId user-id))
    (filter #(not (= (:access %) ::Closed)))))
