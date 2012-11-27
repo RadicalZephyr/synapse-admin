@@ -9,6 +9,13 @@
 
 (declare is-open-acl?)
 
+(defn version-entity [syn entity-id]
+  (let [entity (.getEntityById syn entity-id)
+        old-md5 (.getMd5 entity)
+        new-md5 (md5 (.getBytes old-md5))]
+    (.setMd5 entity new-md5)
+    (.putEntity syn entity)))
+
 (defn public-or-auth-acl? [acl]
   (map #(if (= (:principalId %) 273948)
           ::Auth_Users ::Public)

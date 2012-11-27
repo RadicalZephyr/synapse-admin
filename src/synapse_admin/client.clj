@@ -1,8 +1,13 @@
 (ns synapse-admin.client
   (:use [clojure.data.json :only (read-json)])
-  (:import org.sagebionetworks.client.Synapse)
-  (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl)
-  (:import org.sagebionetworks.client.exceptions.SynapseNotFoundException))
+  (:import java.security.MessageDigest
+           org.sagebionetworks.client.Synapse
+           org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl
+           org.sagebionetworks.client.exceptions.SynapseNotFoundException))
+
+(defn md5 [bytes]
+  (let [digest (.digest (MessageDigest/getInstance "md5") bytes)]
+    (.substring (format "%032x" (BigInteger. 1 digest)) 0 32)))
 
 (defn list-methods [obj]
   (when obj
