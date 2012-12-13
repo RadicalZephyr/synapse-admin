@@ -169,12 +169,7 @@
                         :closed (count closed-projects)}}}))
 
 (defn get-all-projects [syn]
-  (:results
-   (read-json
-    (->
-     syn
-     (.query "select * from project")
-     .toString))))
+  (paginate-query syn "select * from project" 1024))
 
 (defn get-all-acls [syn all-projects]
   (map #(object->json (try
@@ -187,3 +182,9 @@
   (let [all-users (object->json (.getUsers syn 0 10000))
         all-ids (map #(:ownerId %) (:results all-users))]
     (map #(object->json (.getUserProfile syn (str %))) all-ids)))
+
+(defn collect-stats [syn]
+  (let [profiles (future (get-all-profiles syn))
+        projects (future (get-all-projects syn))
+        project-acls (future (get-all-acls syn @projects))]
+    (synapse-stats @profiles @projects @project-acls)))
