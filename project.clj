@@ -6,6 +6,6 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/data.json "0.1.3"]
                  [seesaw "1.4.2"]
-                 [org.sagebionetworks/synapseJavaClient "1.8.0"]]
+                 [org.sagebionetworks/synapseJavaClient "2013-04-08-cc76cb5-386"]]
   :repositories [["sagebionetworks-releases-local"
                   "http://sagebionetworks.artifactoryonline.com/sagebionetworks/libs-releases-local"]])
