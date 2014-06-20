@@ -1,11 +1,11 @@
 (ns synapse-admin.core
-  (:use [clojure.string :only (split lower-case)])
-  (:use [clojure.data.json :only (read-json)])
-  (:use [clojure.set :only (intersection)])
-  (:use synapse-admin.client)
-  (:import org.sagebionetworks.client.Synapse)
-  (:import org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl)
-  (:import org.sagebionetworks.client.exceptions.SynapseNotFoundException))
+  (:use [clojure.string :only (split lower-case)]
+        [clojure.data.json :only (read-json)]
+        [clojure.set :only (intersection)]
+        synapse-admin.client)
+  (:import org.sagebionetworks.client.SynapseClient
+           org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl
+           org.sagebionetworks.client.exceptions.SynapseNotFoundException))
 
 (declare is-open-acl?)
 
