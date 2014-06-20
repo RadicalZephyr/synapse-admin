@@ -35,12 +35,12 @@
         synapse (Synapse.)]
     (cond (and (not (= "" password))
                (validate-email username))
-          (try            
+          (try
             (.login synapse
                     username
                     password)
             (login synapse username password)
-            (alert root "You've successfully logged in to Synapse!")                        
+            (alert root "You've successfully logged in to Synapse!")
             (display-main-page root)
             (catch
                 org.sagebionetworks.client.exceptions.SynapseBadRequestException ex
