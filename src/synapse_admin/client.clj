@@ -1,7 +1,6 @@
 (ns synapse-admin.client
   (:use [clojure.data.json :only (read-json)])
   (:import java.security.MessageDigest
-           org.sagebionetworks.client.Synapse
            org.sagebionetworks.schema.adapter.org.json.JSONObjectAdapterImpl
            org.sagebionetworks.client.exceptions.SynapseNotFoundException))
 
