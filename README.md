@@ -1,8 +1,9 @@
 # Synapse-Admin
 
-A Clojure library designed to provide an desktop application for doing
-basic administrative tasks on [Synapse][], as well as being able to
+A Clojure library designed to provide a desktop application for doing
+basic administrative tasks on [Synapse], as well as being able to
 gather some statistics about Synapse.
+
 [Synapse]: http://synapse.sagebase.org
 
 ## Usage
