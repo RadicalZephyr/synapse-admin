@@ -1,0 +1,22 @@
+> lein repl
+
+in the repl
+-----------
+(def synapse (org.sagebionetworks.client.Synapse.))
+(def response (.login synapse "christopherbare@gmail.com", "san juan island"))
+
+(require ['synapse-admin.core :refer :all])
+(collect-stats synapse)
+
+
+## {:users {:sage 915, :non-sage 0}, :projects {:sage {:open 0, :closed 0}, :non-sage {:open 0, :closed 0}, :total {:all 38, :open 37, :closed 1}}}
+
+(def users (get-all-profiles synapse))
+(def open-data (get-users-open-data synapse users))
+
+
+(data-vectors-to-csv (data-to-vector map-seq user) 4)
+
+
+Note: Here's where I left off. I only partially figured out how to run this code and some of it no longer works. I switched to Python. see: https://gist.github.com/4686667
+

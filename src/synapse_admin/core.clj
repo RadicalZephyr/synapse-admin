@@ -44,7 +44,7 @@
 
 (defn get-users-open-data [syn user-list]
   (filter seq
-          (map #(get-open-entities "data" syn (:ownerId %))
+          (map #(get-open-entities syn "data" (:ownerId %))
                user-list)))
 
 (defn remove-owner-id [map-seq]
@@ -178,9 +178,13 @@
                           %)))
        all-projects))
 
+(defn get-all-users [syn] (object->json (.getUsers syn 0 10000)))
+
+(defn get-owner-ids [users] (map #(:ownerId %) (:results users)))
+
 (defn get-all-profiles [syn]
-  (let [all-users (object->json (.getUsers syn 0 10000))
-        all-ids (map #(:ownerId %) (:results all-users))]
+  (let [all-users (get-all-users syn)
+        all-ids (get-owner-ids all-users)]
     (map #(object->json (.getUserProfile syn (str %))) all-ids)))
 
 (defn collect-stats [syn]
